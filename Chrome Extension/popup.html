@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --bg: #1a1d27;
+      --panel: #252936;
+      --panel-2: #1f2230;
+      --border: #3a3f52;
+      --text: #e3e5ec;
+      --muted: #8e93a6;
+      --accent: #7c5cff;
+      --accent-2: #5b7cff;
+      --green: #3ecf8e;
+      --red: #f14e62;
+      --amber: #f0a726;
+    }
+    * { box-sizing: border-box; }
+    body {
+      width: 380px; margin: 0; padding: 12px;
+      font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px;
+      background: var(--bg); color: var(--text);
+    }
+    h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .card { background: var(--panel); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row.equal > * { flex: 1; }
+    .grow { flex: 1; }
+    .muted { color: var(--muted); }
+    .small { font-size: 11px; }
+
+    .connection {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 10px 12px; margin-bottom: 10px;
+      background: var(--panel); border-radius: 10px;
+      border-left: 4px solid var(--muted);
+    }
+    .connection.on { border-left-color: var(--green); }
+    .connection.off { border-left-color: var(--red); }
+    .connection.warn { border-left-color: var(--amber); }
+    .conn-label { font-weight: 600; }
+    .conn-sub { font-size: 11px; color: var(--muted); margin-top: 2px; word-break: break-all; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); margin-right: 6px; }
+    .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .dot.off { background: var(--red); }
+    .dot.warn { background: var(--amber); }
+
+    button, select, input {
+      font-family: inherit; font-size: 13px;
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 7px 10px;
+    }
+    button { cursor: pointer; transition: filter .15s, background .15s; }
+    button:hover:not(:disabled) { filter: brightness(1.15); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn-danger { background: var(--red); border-color: var(--red); color: #fff; font-weight: 600; }
+    .btn-ghost { background: transparent; }
+    .icon-btn { padding: 4px 7px; font-size: 12px; }
+    .wide { width: 100%; }
+
+    .mode-switch { display: flex; background: var(--panel-2); border-radius: 6px; padding: 3px; border: 1px solid var(--border); }
+    .mode-switch label { flex: 1; text-align: center; padding: 6px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+    .mode-switch input { display: none; }
+    .mode-switch input:checked + label { background: var(--accent); color: #fff; font-weight: 600; }
+
+    .list { max-height: 140px; overflow-y: auto; }
+    .list-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 8px; background: var(--panel-2);
+      border-radius: 5px; margin-bottom: 4px; font-size: 12px;
+    }
+    .list-item .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .list-item .meta { color: var(--muted); font-size: 11px; margin-right: 4px; }
+    .list-item.active { border-left: 3px solid var(--accent); }
+    .list-item.clickable { cursor: pointer; }
+    .list-item.clickable:hover { background: #2b3042; }
+    .flag { width: 20px; height: 14px; border-radius: 2px; object-fit: cover; flex: none; }
+    #countryList { max-height: 220px; margin-top: 6px; }
+
+    .status { padding: 6px 8px; border-radius: 5px; font-size: 12px; margin-top: 8px; }
+    .status.success { background: rgba(62,207,142,.15); color: var(--green); border: 1px solid rgba(62,207,142,.3); }
+    .status.error { background: rgba(241,78,98,.15); color: var(--red); border: 1px solid rgba(241,78,98,.3); }
+    .status.info { background: rgba(91,124,255,.15); color: var(--accent-2); border: 1px solid rgba(91,124,255,.3); }
+    .hidden { display: none !important; }
+
+    .banner { padding: 8px 10px; border-radius: 6px; font-size: 12px; background: rgba(240,167,38,.12); color: var(--amber); border: 1px solid rgba(240,167,38,.3); margin-bottom: 10px; }
+
+    input[type="file"] { display: none; }
+    .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div id="apiOffline" class="banner hidden">
+    Yerel API'ye ulaşılamıyor. <b>WireGuardAPIService</b> çalışıyor mu? (Servis kurulum.bat)
+  </div>
+  <div id="noWireproxy" class="banner hidden">
+    <b>wireproxy.exe</b> bulunamadı. Servis kurulum.bat → [7] ile indir.
+  </div>
+  <div id="proxyConflict" class="banner hidden">
+    Chrome proxy ayarı başka bir eklentinin kontrolünde. O eklentiyi kapat.
+  </div>
+
+  <div id="connCard" class="connection off">
+    <div class="grow">
+      <div class="conn-label"><span id="connDot" class="dot off"></span><span id="connText">Bağlı değil</span></div>
+      <div id="connSub" class="conn-sub">Profil seçilmedi</div>
+    </div>
+    <button id="toggleBtn" class="btn-primary">Bağlan</button>
+  </div>
+
+  <div id="mainUI">
+    <div class="card">
+      <h3>Ne tünellensin?</h3>
+      <div class="mode-switch">
+        <input type="radio" name="mode" id="modeBrowser" value="browser" checked>
+        <label for="modeBrowser">Tüm Chrome</label>
+        <input type="radio" name="mode" id="modeTab" value="tab">
+        <label for="modeTab">Seçili sekmeler</label>
+      </div>
+      <div id="tabInfo" class="small muted hidden" style="margin-top:8px;"></div>
+      <button id="tabToggleBtn" class="wide hidden" style="margin-top:6px;"></button>
+      <div id="tabList" class="list hidden" style="margin-top:6px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="header-row">
+        <h3 style="margin:0">ProtonVPN</h3>
+        <span id="protonTier" class="small muted"></span>
+      </div>
+      <button id="pickCountryBtn" class="btn-primary wide" style="margin-top:6px;">📍 Konum seç</button>
+      <div id="countryPanel" class="hidden">
+        <input id="countrySearch" class="wide" placeholder="Ülke ara…" style="margin-top:8px;">
+        <div id="countryList" class="list"></div>
+      </div>
+      <div id="protonStatus" class="status hidden"></div>
+      <button id="protonLoginBtn" class="wide hidden" style="margin-top:6px;">account.protonvpn.com'u aç ve giriş yap</button>
+    </div>
+
+    <div class="card">
+      <div class="header-row">
+        <h3 style="margin:0">Profiller <span class="small muted" style="text-transform:none;letter-spacing:0;font-weight:400">↻ aynı ülkeden başka sunucu</span></h3>
+        <button id="importBtn" class="btn-ghost icon-btn" title="Elle .conf ekle">+ .conf ekle</button>
+        <input type="file" id="fileInput" accept=".conf,text/plain">
+      </div>
+      <div id="profileList" class="list" style="margin-top:6px;"></div>
+      <div id="profileStatus" class="status hidden"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+venv/
+
+# Downloaded by "Servis kurulum.bat" -> [7]
+wireproxy.exe
+
+# WireGuard profiles hold private keys; they live in %PROGRAMDATA%\wg-chrome-manager
+*.conf
