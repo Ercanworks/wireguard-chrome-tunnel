@@ -79,7 +79,7 @@ async function api(path, opts = {}) {
 async function bg(type, payload = {}) {
   const res = await chrome.runtime.sendMessage({ type, ...payload });
   if (!res?.ok) {
-    const err = new Error(res?.error || "Arka plan hatası");
+    const err = new Error(res?.error || "Background error");
     err.auth = res?.auth;
     throw err;
   }
@@ -113,15 +113,15 @@ function render() {
   $.connCard.className = `connection ${active ? "on" : half ? "warn" : "off"}`;
   $.connDot.className = `dot ${active ? "on" : half ? "warn" : "off"}`;
   if (active) {
-    $.connText.textContent = route.mode === "browser" ? "Bağlı — Tüm Chrome" : `Bağlı — ${tunneledTabs.length} sekme`;
+    $.connText.textContent = route.mode === "browser" ? "Connected — All of Chrome" : `Connected — ${tunneledTabs.length} tab${tunneledTabs.length === 1 ? "" : "s"}`;
   } else {
-    $.connText.textContent = half ? "Yarım bağlantı" : "Bağlı değil";
+    $.connText.textContent = half ? "Half connected" : "Not connected";
   }
   const activeInfo = status.active_profile && profileInfo(status.active_profile);
-  let sub = activeInfo ? (activeInfo.proton ? `Proton ${activeInfo.label}` : activeInfo.label) : "Profil seçilmedi";
-  if (active && exitInfo) sub += exitInfo.ok ? ` · Çıkış IP ${exitInfo.ip} (${exitInfo.country})` : ` · ⚠ ${exitInfo.error}`;
+  let sub = activeInfo ? (activeInfo.proton ? `Proton ${activeInfo.label}` : activeInfo.label) : "No profile selected";
+  if (active && exitInfo) sub += exitInfo.ok ? ` · Exit IP ${exitInfo.ip} (${exitInfo.country})` : ` · ⚠ ${exitInfo.error}`;
   $.connSub.textContent = sub;
-  $.toggleBtn.textContent = active || half ? "Bağlantıyı kes" : "Bağlan";
+  $.toggleBtn.textContent = active || half ? "Disconnect" : "Connect";
   $.toggleBtn.className = active || half ? "btn-danger" : "btn-primary";
   if (!busy) $.toggleBtn.disabled = !(active || half) && (!status.active_profile || !status.wireproxy_installed);
 
@@ -135,20 +135,20 @@ function render() {
   $.tabList.classList.toggle("hidden", !(showTabs && tunneledTabs.length));
   if (tabMode) {
     $.tabInfo.textContent = active
-      ? "Listede olmayan sekmeler doğrudan bağlanır (tüneldeki sitelere gidenler hariç)."
-      : "Bağlan'a basınca şu anki sekme tünellenir; sonra istediğin sekmeleri ekleyebilirsin.";
+      ? "Tabs not in the list connect directly (except requests to sites that are in the tunnel)."
+      : "Pressing Connect tunnels the current tab; you can add more tabs afterwards.";
   }
   if (showTabs && currentTab) {
     const inTunnel = currentTab.id in route.tabs;
-    $.tabToggleBtn.textContent = inTunnel ? "− Bu sekmeyi tünelden çıkar" : "+ Bu sekmeyi tünele ekle";
+    $.tabToggleBtn.textContent = inTunnel ? "− Remove this tab from the tunnel" : "+ Add this tab to the tunnel";
     $.tabToggleBtn.className = `wide ${inTunnel ? "" : "btn-primary"}`;
   }
   $.tabList.innerHTML = tunneledTabs.map((t) => `
     <div class="list-item clickable ${t.id === currentTab?.id ? "active" : ""}" data-focus="${t.id}" title="${esc(t.url)}">
       ${t.favIconUrl?.startsWith("http") ? `<img class="flag" style="width:14px" src="${esc(t.favIconUrl)}" alt="">` : ""}
-      <span class="label">${esc(t.title || hostOf(t.url) || "Yeni sekme")}</span>
+      <span class="label">${esc(t.title || hostOf(t.url) || "New tab")}</span>
       <span class="meta">${(route.tabs[t.id] || []).length} host</span>
-      <button class="btn-ghost icon-btn" data-untab="${t.id}" title="Tünelden çıkar">✕</button>
+      <button class="btn-ghost icon-btn" data-untab="${t.id}" title="Remove from the tunnel">✕</button>
     </div>`).join("");
 
   // profiles
@@ -161,25 +161,25 @@ function render() {
           ${info.country ? `<img class="flag" src="${flagUrl(info.country)}" alt="${esc(info.country)}">` : ""}
           <span class="label">${esc(info.label)}</span>
           ${isActive ? '<span class="meta">aktif</span>' : ""}
-          ${info.proton ? `<button class="btn-ghost icon-btn" data-replace="${esc(p)}" title="${esc(info.country)} için başka bir sunucudan yeni profil üret, bunu sil">↻</button>` : ""}
-          <button class="btn-ghost icon-btn" data-del="${esc(p)}" title="${info.proton ? "Sil (Proton hesabından da)" : "Sil"}">✕</button>
+          ${info.proton ? `<button class="btn-ghost icon-btn" data-replace="${esc(p)}" title="Make a new profile on another server in ${esc(info.country)} and delete this one">↻</button>` : ""}
+          <button class="btn-ghost icon-btn" data-del="${esc(p)}" title="${info.proton ? "Delete (from the Proton account too)" : "Delete"}">✕</button>
         </div>`;
       }).join("")
-    : `<div class="list-item muted"><span class="label">Profil yok. Konum seç veya .conf ekle.</span></div>`;
+    : `<div class="list-item muted"><span class="label">No profiles. Choose a location or add a .conf.</span></div>`;
 }
 
 function renderCountries() {
   if (!countries) return;
-  const q = $.countrySearch.value.trim().toLocaleLowerCase("tr");
-  const list = countries.filter((c) => !q || c.name.toLocaleLowerCase("tr").includes(q) || c.code.toLowerCase() === q);
+  const q = $.countrySearch.value.trim().toLocaleLowerCase("en");
+  const list = countries.filter((c) => !q || c.name.toLocaleLowerCase("en").includes(q) || c.code.toLowerCase() === q);
   $.countryList.innerHTML = list.length
     ? list.map((c) => `
         <div class="list-item clickable" data-country="${esc(c.code)}">
           <img class="flag" src="${flagUrl(c.code)}" alt="${esc(c.code)}">
           <span class="label">${esc(c.name)}</span>
-          <span class="meta">${c.count} sunucu · %${c.load}</span>
+          <span class="meta">${c.count} server${c.count === 1 ? "" : "s"} · ${c.load}%</span>
         </div>`).join("")
-    : `<div class="list-item muted"><span class="label">Eşleşen ülke yok.</span></div>`;
+    : `<div class="list-item muted"><span class="label">No matching country.</span></div>`;
 }
 
 // ---------- sync
@@ -226,14 +226,14 @@ async function afterConnect(data) {
   render();
   await checkExit();
   if (exitInfo && !exitInfo.ok && protonMeta[status.active_profile]) {
-    show($.protonStatus, "Tünel trafik geçirmiyor — “Başka sunucu” ile aynı ülkeden yeni profil dene.", "error", false);
+    show($.protonStatus, "The tunnel passes no traffic — try a new profile in the same country with ↻.", "error", false);
   }
 }
 
 function protonError(e) {
   $.protonLoginBtn.classList.toggle("hidden", !e.auth);
   show($.protonStatus, e.auth
-    ? `${e.message}. Proton hesabına bu Chrome'da giriş yapıp sayfayı bir kez açman yeterli.`
+    ? `${e.message}. Sign in to your Proton account in this Chrome and open the page once.`
     : e.message, "error", false);
 }
 
@@ -289,7 +289,7 @@ $.pickCountryBtn.addEventListener("click", () => withBusy($.pickCountryBtn, asyn
   try {
     const data = await bg("protonCountries");
     countries = data.countries;
-    $.protonTier.textContent = data.maxTier >= 1 ? "Plus hesap" : "Ücretsiz hesap";
+    $.protonTier.textContent = data.maxTier >= 1 ? "Plus account" : "Free account";
     $.protonLoginBtn.classList.add("hidden");
     $.protonStatus.classList.add("hidden");
     $.countryPanel.classList.remove("hidden");
@@ -302,14 +302,14 @@ $.countrySearch.addEventListener("input", renderCountries);
 
 async function createProton(country) {
   const name = countries?.find((c) => c.code === country)?.name || country;
-  show($.protonStatus, `${name} için WireGuard profili üretiliyor…`, "info", false);
+  show($.protonStatus, `Making a WireGuard profile for ${name}…`, "info", false);
   try {
     const data = await bg("protonCreate", {
       country, connect: true, mode: selectedMode(), tabId: currentTab?.id,
     });
     protonMeta = await bg("protonMeta");
     $.countryPanel.classList.add("hidden");
-    show($.protonStatus, `${data.created.logical}${data.created.city ? " (" + data.created.city + ")" : ""} profili eklendi ve bağlanıldı.`, "success");
+    show($.protonStatus, `${data.created.logical}${data.created.city ? " (" + data.created.city + ")" : ""} profile added and connected.`, "success");
     await afterConnect(data);
   } catch (e) {
     protonError(e);
@@ -327,16 +327,16 @@ $.protonLoginBtn.addEventListener("click", () => {
 });
 
 const PROTON_RESULT = {
-  deleted: "Proton hesabından da kaldırıldı.",
-  notfound: "Proton hesabında eşleşen kayıt yoktu (zaten silinmiş olabilir).",
+  deleted: "Removed from the Proton account too.",
+  notfound: "No matching entry in the Proton account (it may already be deleted).",
   skipped: "",
 };
 
 async function deleteProfile(name) {
   const info = profileInfo(name);
   const ask = info.proton
-    ? `"${info.label}" silinsin mi?\nProton hesabındaki WireGuard kaydı da kaldırılacak.`
-    : `"${name}" silinsin mi?`;
+    ? `Delete "${info.label}"?\nIts WireGuard entry in the Proton account will be removed too.`
+    : `Delete "${name}"?`;
   if (!confirm(ask)) return;
   let data;
   try {
@@ -344,24 +344,24 @@ async function deleteProfile(name) {
   } catch (err) {
     if (!err.revoke) { show($.profileStatus, err.message, "error", false); return; }
     $.protonLoginBtn.classList.toggle("hidden", !err.auth);
-    if (!confirm(`${err.message}\n\nSadece bu bilgisayardan silinsin mi?`)) return;
+    if (!confirm(`${err.message}\n\nDelete it from this computer only?`)) return;
     try { data = await bg("deleteProfile", { name, localOnly: true }); }
     catch (e2) { show($.profileStatus, e2.message, "error", false); return; }
   }
   status = data.status;
   await updateRoute(data);
   protonMeta = await bg("protonMeta");
-  show($.profileStatus, `${info.label} silindi. ${PROTON_RESULT[data.proton] ?? ""}`, "success");
+  show($.profileStatus, `${info.label} deleted. ${PROTON_RESULT[data.proton] ?? ""}`, "success");
 }
 
 async function replaceProfile(name) {
   const info = profileInfo(name);
-  show($.profileStatus, `${info.country} için başka bir sunucu aranıyor…`, "info", false);
+  show($.profileStatus, `Looking for another server in ${info.country}…`, "info", false);
   try {
     const data = await bg("replaceProfile", { name, mode: selectedMode(), tabId: currentTab?.id });
     protonMeta = await bg("protonMeta");
-    const revoked = data.proton === "deleted" ? " Eskisi Proton'dan kaldırıldı."
-      : data.proton?.startsWith("failed") ? " ⚠ Eskisi Proton'dan kaldırılamadı." : "";
+    const revoked = data.proton === "deleted" ? " The old one was removed from Proton."
+      : data.proton?.startsWith("failed") ? " ⚠ The old one could not be removed from Proton." : "";
     show($.profileStatus, `${info.label} → ${data.created.logical}${data.created.city ? " (" + data.created.city + ")" : ""}.${revoked}`, "success", false);
     await afterConnect(data);
   } catch (e) {
@@ -397,7 +397,7 @@ $.fileInput.addEventListener("change", async () => {
   await withBusy($.importBtn, async () => {
     try {
       status = (await api("/api/profiles", { method: "POST", body: { name: file.name, conf: text } })).status;
-      show($.profileStatus, `Profil eklendi: ${file.name}`, "success");
+      show($.profileStatus, `Profile added: ${file.name}`, "success");
     } catch (e) { show($.profileStatus, e.message, "error", false); }
   });
   $.fileInput.value = "";

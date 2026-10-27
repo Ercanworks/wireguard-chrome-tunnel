@@ -5,8 +5,6 @@ WireGuard runs in user space with [wireproxy](https://github.com/whyvl/wireproxy
 and opens a local SOCKS5 proxy (`127.0.0.1:25344`); no network adapter or
 system route is created.
 
-The extension's UI is in Turkish.
-
 ## Features
 
 - **All of Chrome** — all of Chrome's traffic goes through the tunnel. If the tunnel
@@ -24,7 +22,7 @@ The extension's UI is in Turkish.
 ## Installation
 
 1. Python 3.11+ and the dependencies: `pip install -r requirements.txt`
-2. `Servis kurulum.bat` → **[7]** download wireproxy, **[1]** install the service.
+2. `Service setup.bat` → **[7]** download wireproxy, **[1]** install the service.
 3. `chrome://extensions` → Developer mode → **Load unpacked** →
    the `Chrome Extension` folder (Chrome 137+).
 4. For Proton, sign in to `account.protonvpn.com` once in Chrome.

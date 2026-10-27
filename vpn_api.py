@@ -134,7 +134,7 @@ def tunnel_start():
     global _proc
     exe = wireproxy_exe()
     if not exe:
-        raise RuntimeError("wireproxy.exe bulunamadı (proje klasörüne koy)")
+        raise RuntimeError("wireproxy.exe not found (put it in the project folder)")
     with _lock:
         tunnel_stop()
         write_active_conf()
@@ -152,7 +152,7 @@ def tunnel_start():
             time.sleep(0.25)
         tail = LOG_FILE.read_text(encoding="utf-8", errors="ignore")[-400:].strip()
         tunnel_stop()
-        raise RuntimeError(f"wireproxy başlatılamadı: {tail or 'bilinmeyen hata'}")
+        raise RuntimeError(f"wireproxy could not be started: {tail or 'unknown error'}")
 
 
 def restart_if_connected():
@@ -328,7 +328,7 @@ def api_check():
     try:
         return jsonify({"ok": True, **tunnel_check()})
     except Exception as e:
-        return jsonify({"ok": False, "error": f"Tünel trafik geçirmiyor: {e}"}), 502
+        return jsonify({"ok": False, "error": f"The tunnel passes no traffic: {e}"}), 502
 
 
 def shutdown():

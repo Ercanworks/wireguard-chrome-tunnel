@@ -322,7 +322,7 @@ async function protonHeaders() {
     const cookies = await chrome.cookies.getAll({ domain: "account.protonvpn.com" });
     uid = cookies.find((c) => c.name.startsWith("AUTH-"))?.name.slice(5);
   }
-  if (!uid) throw new ProtonAuthError("Proton oturumu bulunamadı");
+  if (!uid) throw new ProtonAuthError("No Proton session found");
   return {
     "x-pm-uid": uid,
     "x-pm-appversion": protonSession?.appVersion || "web-vpn-settings@5.0.999.999",
@@ -341,7 +341,7 @@ async function papi(path, opts = {}) {
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 || res.status === 403 || data.Code === 5003) {
     await chrome.storage.local.remove("protonSession");
-    throw new ProtonAuthError(data.Error || "Proton oturumu geçersiz");
+    throw new ProtonAuthError(data.Error || "The Proton session is not valid");
   }
   if (!res.ok || (data.Code && data.Code !== 1000 && data.Code !== 1001)) {
     const err = new Error(data.Error || `Proton HTTP ${res.status}`);
@@ -378,7 +378,7 @@ async function protonServers(force = false) {
   return logicalsCache;
 }
 
-const regionNames = new Intl.DisplayNames(["tr"], { type: "region" });
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 async function protonCountries() {
   const { list, maxTier } = await protonServers();
@@ -394,7 +394,7 @@ async function protonCountries() {
     let name = c.code;
     try { name = regionNames.of(c.code === "UK" ? "GB" : c.code); } catch {}
     return { ...c, name, load: Math.round(c.load / c.count) };
-  }).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }).sort((a, b) => a.name.localeCompare(b.name, "en"));
   return { countries, maxTier };
 }
 
@@ -446,7 +446,7 @@ PersistentKeepalive = 25
 async function protonCreate(country, { exclude } = {}) {
   const { list, maxTier } = await protonServers(true);
   const candidates = list.filter((l) => l.ExitCountry === country);
-  if (!candidates.length) throw new Error(`${country} için uygun sunucu yok (hesap seviyesi: ${maxTier})`);
+  if (!candidates.length) throw new Error(`No suitable server in ${country} (account tier: ${maxTier})`);
 
   const { protonUsed = {}, protonMeta = {} } = await chrome.storage.local.get(["protonUsed", "protonMeta"]);
   let used = [...new Set([...(protonUsed[country] || []), ...(exclude ? [exclude] : [])])];
@@ -570,7 +570,7 @@ async function deleteProfile(name, { localOnly = false } = {}) {
     if (meta || /10\.2\.0\.2\/32/.test(conf)) {
       try { proton = await protonRevoke(meta, conf); }
       catch (e) {
-        const err = new ProtonRevokeError(`Proton hesabından kaldırılamadı: ${e.message}`);
+        const err = new ProtonRevokeError(`Could not remove it from the Proton account: ${e.message}`);
         err.auth = e instanceof ProtonAuthError;
         throw err;
       }
@@ -588,7 +588,7 @@ async function replaceProfile(name, mode, tabId) {
   const { protonMeta = {} } = await chrome.storage.local.get("protonMeta");
   const oldMeta = protonMeta[name];
   const country = oldMeta?.country || countryFromName(name);
-  if (!country) throw new Error("Bu profilin ülkesi anlaşılamadı");
+  if (!country) throw new Error("Could not tell this profile's country");
   const oldConf = oldMeta?.serial ? null
     : (await api("/api/profiles/read", { method: "POST", body: { name } }).catch(() => ({}))).conf;
 

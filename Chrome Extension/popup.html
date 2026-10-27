@@ -94,31 +94,31 @@
 </head>
 <body>
   <div id="apiOffline" class="banner hidden">
-    Yerel API'ye ulaşılamıyor. <b>WireGuardAPIService</b> çalışıyor mu? (Servis kurulum.bat)
+    The local API is not reachable. Is <b>WireGuardAPIService</b> running? (Service setup.bat)
   </div>
   <div id="noWireproxy" class="banner hidden">
-    <b>wireproxy.exe</b> bulunamadı. Servis kurulum.bat → [7] ile indir.
+    <b>wireproxy.exe</b> not found. Download it with Service setup.bat → [7].
   </div>
   <div id="proxyConflict" class="banner hidden">
-    Chrome proxy ayarı başka bir eklentinin kontrolünde. O eklentiyi kapat.
+    Chrome's proxy setting is controlled by another extension. Turn that extension off.
   </div>
 
   <div id="connCard" class="connection off">
     <div class="grow">
-      <div class="conn-label"><span id="connDot" class="dot off"></span><span id="connText">Bağlı değil</span></div>
-      <div id="connSub" class="conn-sub">Profil seçilmedi</div>
+      <div class="conn-label"><span id="connDot" class="dot off"></span><span id="connText">Not connected</span></div>
+      <div id="connSub" class="conn-sub">No profile selected</div>
     </div>
-    <button id="toggleBtn" class="btn-primary">Bağlan</button>
+    <button id="toggleBtn" class="btn-primary">Connect</button>
   </div>
 
   <div id="mainUI">
     <div class="card">
-      <h3>Ne tünellensin?</h3>
+      <h3>What to tunnel?</h3>
       <div class="mode-switch">
         <input type="radio" name="mode" id="modeBrowser" value="browser" checked>
-        <label for="modeBrowser">Tüm Chrome</label>
+        <label for="modeBrowser">All of Chrome</label>
         <input type="radio" name="mode" id="modeTab" value="tab">
-        <label for="modeTab">Seçili sekmeler</label>
+        <label for="modeTab">Selected tabs</label>
       </div>
       <div id="tabInfo" class="small muted hidden" style="margin-top:8px;"></div>
       <button id="tabToggleBtn" class="wide hidden" style="margin-top:6px;"></button>
@@ -130,19 +130,19 @@
         <h3 style="margin:0">ProtonVPN</h3>
         <span id="protonTier" class="small muted"></span>
       </div>
-      <button id="pickCountryBtn" class="btn-primary wide" style="margin-top:6px;">📍 Konum seç</button>
+      <button id="pickCountryBtn" class="btn-primary wide" style="margin-top:6px;">📍 Choose location</button>
       <div id="countryPanel" class="hidden">
-        <input id="countrySearch" class="wide" placeholder="Ülke ara…" style="margin-top:8px;">
+        <input id="countrySearch" class="wide" placeholder="Search country…" style="margin-top:8px;">
         <div id="countryList" class="list"></div>
       </div>
       <div id="protonStatus" class="status hidden"></div>
-      <button id="protonLoginBtn" class="wide hidden" style="margin-top:6px;">account.protonvpn.com'u aç ve giriş yap</button>
+      <button id="protonLoginBtn" class="wide hidden" style="margin-top:6px;">Open account.protonvpn.com and sign in</button>
     </div>
 
     <div class="card">
       <div class="header-row">
-        <h3 style="margin:0">Profiller <span class="small muted" style="text-transform:none;letter-spacing:0;font-weight:400">↻ aynı ülkeden başka sunucu</span></h3>
-        <button id="importBtn" class="btn-ghost icon-btn" title="Elle .conf ekle">+ .conf ekle</button>
+        <h3 style="margin:0">Profiles <span class="small muted" style="text-transform:none;letter-spacing:0;font-weight:400">↻ another server, same country</span></h3>
+        <button id="importBtn" class="btn-ghost icon-btn" title="Add a .conf by hand">+ Add .conf</button>
         <input type="file" id="fileInput" accept=".conf,text/plain">
       </div>
       <div id="profileList" class="list" style="margin-top:6px;"></div>
