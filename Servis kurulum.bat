@@ -1,12 +1,12 @@
 @ECHO OFF
 :: ===============================================
-:: WireGuardAPIService Yönetim Menüsü (idempotent)
-:: - Admin kontrolü (gerekirse kendini yükseltir)
-:: - Başlangıç türü: Automatic
-:: - 1060 (servis yok) => kaldirmaya takilma, devam et
+:: WireGuardAPIService management menu (idempotent)
+:: - Admin check (elevates itself if needed)
+:: - Startup type: Automatic
+:: - 1060 (no such service) => don't fail on uninstall, carry on
 :: ===============================================
 
-:: ---- Yönetici kontrolü ----
+:: ---- Administrator check ----
 net session >nul 2>&1
 if %errorLevel% neq 0 (
     echo [!] Administrator yetkisi gerekiyor, yeniden baslatiliyor...
@@ -17,23 +17,23 @@ if %errorLevel% neq 0 (
 setlocal ENABLEDELAYEDEXPANSION
 title WireGuardAPIService Yonetim Menusu
 
-:: ---- Ayarlar ----
+:: ---- Settings ----
 set SERVICE_NAME=WireGuardAPIService
 set SCRIPT_PATH=%~dp0wireguard_service.py
 
-:: ---- Python bul ----
+:: ---- Find Python ----
 set PYTHON_EXE=
 if exist "%~dp0venv\Scripts\python.exe" set PYTHON_EXE=%~dp0venv\Scripts\python.exe
 if "%PYTHON_EXE%"=="" set PYTHON_EXE=python
 
-:: ---- Dosya kontrol ----
+:: ---- File check ----
 if not exist "%SCRIPT_PATH%" (
   echo [HATA] wireguard_service.py bu klasorde yok!
   pause
   exit /b 1
 )
 
-:: ---- pywin32 kontrol ----
+:: ---- pywin32 check ----
 "%PYTHON_EXE%" -c "import win32serviceutil" >nul 2>&1
 if not "%ERRORLEVEL%"=="0" (
   echo [HATA] pywin32 yok. Yuklemek icin:
@@ -70,7 +70,7 @@ echo [HATA] Gecersiz secim!
 pause
 goto :menu
 
-:: ----------------- İşlemler -----------------
+:: ----------------- Actions -----------------
 
 :install
 echo [BILGI] %SERVICE_NAME% servisi yukleniyor...
@@ -88,7 +88,7 @@ pause
 exit /b
 
 :uninstall
-:: Var mi diye bak; yoksa basarili say
+:: Check whether it exists; if not, count it as success
 sc query "%SERVICE_NAME%" >nul 2>&1
 if not "%ERRORLEVEL%"=="0" (
   echo [BILGI] %SERVICE_NAME% zaten yuklu degil, kaldirma atlandi.
@@ -96,19 +96,19 @@ if not "%ERRORLEVEL%"=="0" (
 )
 
 echo [BILGI] %SERVICE_NAME% servisi kaldiriliyor...
-:: once durdur (hata olursa onemseme)
+:: stop it first (ignore errors)
 "%PYTHON_EXE%" "%SCRIPT_PATH%" stop >nul 2>&1
 
-:: python remove dene; hata verse bile devam
+:: try python remove; carry on even if it fails
 "%PYTHON_EXE%" "%SCRIPT_PATH%" remove >nul 2>&1
 
-:: sc delete ile garanti temizle (varsa)
+:: make sure with sc delete (if it is still there)
 sc query "%SERVICE_NAME%" >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
   sc delete "%SERVICE_NAME%" >nul 2>&1
 )
 
-:: maksimum 5 sn bekle: servis girdisi tamamen silinsin
+:: wait up to 5 s for the service entry to be fully removed
 set /a _tries=0
 :waitgone
 sc query "%SERVICE_NAME%" >nul 2>&1

@@ -1,39 +1,41 @@
 # WireGuard Chrome Tunnel
 
-Sadece Chrome'u WireGuard üzerinden tüneller — cihazın geri kalanına dokunmaz.
-WireGuard, [wireproxy](https://github.com/whyvl/wireproxy) ile kullanıcı alanında
-çalışır ve yerel bir SOCKS5 proxy (`127.0.0.1:25344`) açar; ağ bağdaştırıcısı veya
-sistem rotası oluşturulmaz.
+Tunnels only Chrome through WireGuard — the rest of the device is left alone.
+WireGuard runs in user space with [wireproxy](https://github.com/whyvl/wireproxy)
+and opens a local SOCKS5 proxy (`127.0.0.1:25344`); no network adapter or
+system route is created.
 
-## Özellikler
+The extension's UI is in Turkish.
 
-- **Tüm Chrome** — Chrome'un bütün trafiği tünelden geçer. Tünel düşerse Chrome
-  doğrudan bağlanmaz (kill switch).
-- **Seçili sekmeler** — yalnızca eklediğin sekmeler tünellenir. Sekmenin bağlandığı
-  hostlar otomatik öğrenilir; öğrenilmeden önce engellenir, böylece sızıntı olmaz.
-  > Chrome sekme bazlı proxy desteklemez: tüneldeki bir siteyi başka bir sekmede
-  > açarsan o istekler de tünelden geçer.
-- **ProtonVPN konum seçici** — Chrome'da açık Proton oturumunu kullanarak hesabının
-  erişebildiği ülkeleri listeler, seçilen ülke için WireGuard profili üretip bağlanır.
-  Her profilde **↻** aynı ülkeden başka sunucuya geçer, **✕** profili Proton
-  hesabından da kaldırır.
-- WebRTC IP sızıntısı tünel açıkken engellenir.
+## Features
 
-## Kurulum
+- **All of Chrome** — all of Chrome's traffic goes through the tunnel. If the tunnel
+  drops, Chrome does not connect directly (kill switch).
+- **Selected tabs** — only the tabs you add are tunneled. The hosts a tab connects to
+  are learned automatically; they are blocked until learned, so nothing leaks.
+  > Chrome has no per-tab proxy support: if you open a tunneled site in another
+  > tab, those requests go through the tunnel too.
+- **ProtonVPN location picker** — using the Proton session open in Chrome, lists the
+  countries your account can use, generates a WireGuard profile for the chosen
+  country and connects. On each profile **↻** switches to another server in the same
+  country, and **✕** also removes the profile from your Proton account.
+- WebRTC IP leaks are blocked while the tunnel is up.
 
-1. Python 3.11+ ve bağımlılıklar: `pip install -r requirements.txt`
-2. `Servis kurulum.bat` → **[7]** wireproxy'yi indir, **[1]** servisi kur.
-3. `chrome://extensions` → Geliştirici modu → **Paketlenmemiş öğe yükle** →
-   `Chrome Extension` klasörü (Chrome 137+).
-4. Proton için Chrome'da `account.protonvpn.com`'a bir kez giriş yap.
+## Installation
 
-Profiller `%PROGRAMDATA%\wg-chrome-manager\profiles` altında tutulur.
+1. Python 3.11+ and the dependencies: `pip install -r requirements.txt`
+2. `Servis kurulum.bat` → **[7]** download wireproxy, **[1]** install the service.
+3. `chrome://extensions` → Developer mode → **Load unpacked** →
+   the `Chrome Extension` folder (Chrome 137+).
+4. For Proton, sign in to `account.protonvpn.com` once in Chrome.
 
-## Yapı
+Profiles are kept under `%PROGRAMDATA%\wg-chrome-manager\profiles`.
 
-| Dosya | Görev |
+## Layout
+
+| File | Role |
 | --- | --- |
-| `vpn_api.py` | Yerel API (`127.0.0.1:5000`): profiller, wireproxy başlat/durdur, tünel kontrolü |
-| `wireguard_service.py` | API'yi Windows servisi olarak çalıştırır |
-| `Chrome Extension/background.js` | Proxy yönlendirme, sekme öğrenme, Proton API |
-| `Chrome Extension/popup.*` | Arayüz |
+| `vpn_api.py` | Local API (`127.0.0.1:5000`): profiles, start/stop wireproxy, tunnel check |
+| `wireguard_service.py` | Runs the API as a Windows service |
+| `Chrome Extension/background.js` | Proxy routing, tab learning, Proton API |
+| `Chrome Extension/popup.*` | UI |
